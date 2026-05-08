@@ -3,3 +3,14 @@ server:
 spring:
   application:
     name: portfolio-backend
+
+management:
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include: health
+
+  endpoint:
+    health:
+      show-details: always
