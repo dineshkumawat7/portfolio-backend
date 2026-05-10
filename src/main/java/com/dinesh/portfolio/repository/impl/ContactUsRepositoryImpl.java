@@ -6,12 +6,12 @@ import com.dinesh.portfolio.repository.ContactUsRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import org.slf4j.MDC;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
@@ -61,10 +61,7 @@ public class ContactUsRepositoryImpl implements ContactUsRepository {
 
     @Override
     public ContactUs save(ContactUs contactUs) {
-        String traceId = MDC.get("traceId");
-        long startTime = System.currentTimeMillis();
-        log.debug("Entering save repository | traceId={}, email={}", traceId, contactUs.getEmail());
-
+        log.info("Executing database query to save contact-us record | email={}", contactUs.getEmail());
         try {
             KeyHolder keyHolder = new GeneratedKeyHolder();
             int rowsAffected = jdbcTemplate.update(connection -> {
@@ -84,53 +81,42 @@ public class ContactUsRepositoryImpl implements ContactUsRepository {
             }, keyHolder);
 
             if (rowsAffected == 0) {
-                log.error("Database insert failed | traceId={}, email={}", traceId, contactUs.getEmail());
+                log.error("Database insert failed | email={}", contactUs.getEmail());
                 throw new DatabaseOperationException("Unable to save contact request");
             }
 
             Long generatedId = Objects.requireNonNull(keyHolder.getKey()).longValue();
-            long duration = System.currentTimeMillis() - startTime;
-            log.info("Contact request saved successfully | traceId={}, id={}, duration={}ms", traceId, generatedId, duration);
-            log.debug("Exiting save repository | traceId={}", traceId);
-
+            log.info("Contact request saved successfully | id={}", generatedId);
             contactUs.setId(generatedId);
             return contactUs;
         } catch (DataAccessException ex) {
-            long duration = System.currentTimeMillis() - startTime;
-            log.error("Database error saving contact request | traceId={}, email={}, duration={}ms, error={}",
-                      traceId, contactUs.getEmail(), duration, ex.getMessage(), ex);
+            log.error(
+                    "Database error saving contact request | email={}, error={}",
+                    contactUs.getEmail(),
+                    ex.getMessage(), ex
+            );
             throw new DatabaseOperationException("Database error occurred while saving contact request", ex);
         } catch (Exception ex) {
-            long duration = System.currentTimeMillis() - startTime;
-            log.error("Unexpected error saving contact request | traceId={}, email={}, duration={}ms, error={}",
-                      traceId, contactUs.getEmail(), duration, ex.getMessage(), ex);
+            log.error(
+                    "Unexpected error saving contact request | email={}, error={}",
+                    contactUs.getEmail(),
+                    ex.getMessage(), ex);
             throw new DatabaseOperationException("Unexpected error occurred while saving contact request", ex);
         }
     }
 
     @Override
     public List<ContactUs> findAll() {
-        String traceId = MDC.get("traceId");
-        long startTime = System.currentTimeMillis();
-        log.debug("Entering findAll repository | traceId={}", traceId);
-
+        log.info("Executing database query to find All contact-us records");
         try {
             List<ContactUs> contactUsList = jdbcTemplate.query(SELECT_ALL_QUERY, contactUsRowMapper);
-            long duration = System.currentTimeMillis() - startTime;
-            log.info("All contact-us records fetched successfully | traceId={}, totalRecords={}, duration={}ms",
-                     traceId, contactUsList.size(), duration);
-            log.debug("Exiting findAll repository | traceId={}", traceId);
-
+            log.info("All contact-us records fetched successfully | totalRecords={}", contactUsList.size());
             return contactUsList;
         } catch (DataAccessException ex) {
-            long duration = System.currentTimeMillis() - startTime;
-            log.error("Database error fetching contact-us records | traceId={}, duration={}ms, error={}",
-                      traceId, duration, ex.getMessage(), ex);
+            log.error("Database error fetching contact-us records | error={}", ex.getMessage(), ex);
             throw new DatabaseOperationException("Database error occurred while fetching contact requests", ex);
         } catch (Exception ex) {
-            long duration = System.currentTimeMillis() - startTime;
-            log.error("Unexpected error fetching contact requests | traceId={}, duration={}ms, error={}",
-                      traceId, duration, ex.getMessage(), ex);
+            log.error("Unexpected error fetching contact requests | error={}", ex.getMessage(), ex);
             throw new DatabaseOperationException("Unexpected error occurred while fetching contact requests", ex);
         }
     }
@@ -151,6 +137,9 @@ public class ContactUsRepositoryImpl implements ContactUsRepository {
             }
             log.info("Contact request fetched successfully | id={}", id);
             return contactUs;
+        } catch (EmptyResultDataAccessException ex) {
+            log.warn("No contact-us record found in database | id={}", id);
+            return null;
         } catch (DataAccessException ex) {
             log.error(
                     "Database query failed while fetching contact request | id={}, error={}",
@@ -177,11 +166,8 @@ public class ContactUsRepositoryImpl implements ContactUsRepository {
             int rowsAffected = jdbcTemplate.update(DELETE_BY_ID_QUERY, id);
             if (rowsAffected == 0) {
                 log.warn("Delete operation failed because contact-us record does not exist | id={}", id);
-                throw new DatabaseOperationException(
-                        "Contact-us record not found with id: " + id
-                );
+                throw new DatabaseOperationException("Contact-us record not found with id: " + id);
             }
-
             log.info(
                     "Contact-us record deleted successfully from database | id={}, rowsAffected={}",
                     id,

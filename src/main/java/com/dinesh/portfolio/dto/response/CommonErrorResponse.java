@@ -20,5 +20,5 @@ public class CommonErrorResponse {
     private int status;
     private String path;
     private Instant timestamp;
-    private String traceId;
+    private String requestId;
 }

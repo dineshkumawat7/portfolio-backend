@@ -24,7 +24,7 @@ public class ResponseBuilder {
                 .status(status.value())
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
-                .traceId(MDC.get(Constant.TRACE_ID_KEY))
+                .requestId(request.getRequestId())
                 .build();
     }
 
@@ -39,7 +39,7 @@ public class ResponseBuilder {
                 .status(status.value())
                 .path(request.getRequestURI())
                 .timestamp(Instant.now())
-                .traceId(MDC.get(Constant.TRACE_ID_KEY))
+                .requestId(request.getRequestId())
                 .build();
     }
 }

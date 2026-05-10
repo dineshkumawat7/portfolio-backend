@@ -90,6 +90,9 @@ public class ContactUsServiceImpl implements ContactUsService {
                     responseDTO.getEmail()
             );
             return responseDTO;
+        } catch (ResourceNotFoundException ex) {
+            log.warn("Contact-us record not found | id={}, error={}", id, ex.getMessage());
+            throw ex;
         } catch (Exception ex) {
             log.error(
                     "Unexpected exception occurred while fetching contact-us record | id={}, error={}",

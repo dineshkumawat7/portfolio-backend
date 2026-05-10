@@ -17,7 +17,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
-public class TraceIdFilter extends OncePerRequestFilter {
+public class RequestTraceFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
         String traceId = request.getHeader(Constant.TRACE_ID_HEADER);

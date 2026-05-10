@@ -74,7 +74,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<CommonErrorResponse> handleResourceNotFoundException(
             ResourceNotFoundException ex, HttpServletRequest request
     ) {
-        log.warn("Resource not found. URI: {}, Error: {}", request.getRequestURI(), ex.getMessage());
+        log.warn("Resource not found. RequestId: {}, Error: {}", request.getRequestId(), ex.getMessage(), ex);
         CommonErrorResponse errorResponse = ResponseBuilder.buildErrorResponse(
                 "Resource not found",
                 List.of(ex.getMessage()),
