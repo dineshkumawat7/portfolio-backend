@@ -50,7 +50,7 @@ public class ContactUsServiceImpl implements ContactUsService {
                     .build();
             ContactUs saved = contactUsRepository.save(contactUs);
             log.info("Contact-us record created successfully | id: {} | email: {}", saved.getId(), saved.getEmail());
-            // sent acknowledgment email to user
+
             sendContactUsAcknowledgementEmail(saved.getId(), saved.getEmail());
             return modelMapper.map(saved, ContactUsResponseDTO.class);
         } catch (Exception ex) {
@@ -143,7 +143,7 @@ public class ContactUsServiceImpl implements ContactUsService {
     }
 
     @Async
-    private void sendContactUsAcknowledgementEmail(Long id, String email) {
+    protected void sendContactUsAcknowledgementEmail(Long id, String email) {
         log.info("Initiating contact-us acknowledgment email process | id: {} | email: {}", id, email);
         try {
             ContactUsResponseDTO contactUsDetail = getContactUsDetailById(id);
@@ -154,7 +154,7 @@ public class ContactUsServiceImpl implements ContactUsService {
             String htmlContent = templateEngine.process("contact-response-email", context);
             emailService.sendEmail(email, "Thank You For Contacting Me", htmlContent)
                     .thenAccept(success -> {
-                        if (success) {
+                        if (Boolean.TRUE.equals(success)) {
                             try {
                                 ContactUs contactUs = contactUsRepository.findById(id);
                                 contactUs.setEmailSent(true);
@@ -184,7 +184,7 @@ public class ContactUsServiceImpl implements ContactUsService {
                     })
                     .exceptionally(ex -> {
                         log.error(
-                                "Unexpected error while sending contact-us email | id: {} | email: {} | error: {}",",
+                                "Unexpected error while sending contact-us email | id: {} | email: {} | error: {}",
                                 id, email, ex.getMessage(), ex
                         );
                         throw new ServiceException("Unexpected error while sending contact-us email", ex);

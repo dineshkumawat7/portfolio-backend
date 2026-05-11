@@ -2,6 +2,7 @@ package com.dinesh.portfolio.service;
 
 import com.dinesh.portfolio.dto.ContactUsRequestDTO;
 import com.dinesh.portfolio.dto.ContactUsResponseDTO;
+import com.dinesh.portfolio.enums.ContactUsStatus;
 
 import java.util.List;
 
