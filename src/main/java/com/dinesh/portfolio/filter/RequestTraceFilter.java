@@ -31,19 +31,17 @@ public class RequestTraceFilter extends OncePerRequestFilter {
         long startTime = System.currentTimeMillis();
         try {
             log.info(
-                    "Request started method={}, uri={}, clientIp={}, traceId={}",
+                    "Request started method={}, uri={}, clientIp={}",
                     request.getMethod(),
                     request.getRequestURI(),
-                    request.getRemoteAddr(),
-                    traceId
+                    request.getRemoteAddr()
             );
             filterChain.doFilter(request, response);
         } catch (Exception ex) {
             log.error(
-                    "Unhandled exception during request processing method={}, uri={}, traceId={}, error={}",
+                    "Unhandled exception during request processing method={}, uri={}, error={}",
                     request.getMethod(),
                     request.getRequestURI(),
-                    traceId,
                     ex.getMessage(),
                     ex
             );
@@ -51,14 +49,14 @@ public class RequestTraceFilter extends OncePerRequestFilter {
         } finally {
             long duration = System.currentTimeMillis() - startTime;
             log.info(
-                    "Request completed method={}, uri={}, status={}, duration={}ms, traceId={}",
+                    "Request completed method={}, uri={}, status={}, duration={}ms",
                     request.getMethod(),
                     request.getRequestURI(),
                     response.getStatus(),
-                    duration,
-                    traceId
+                    duration
             );
             MDC.clear();
         }
+
     }
 }

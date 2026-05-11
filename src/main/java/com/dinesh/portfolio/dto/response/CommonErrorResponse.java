@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
 import java.time.Instant;
-import java.util.List;
 
 @Getter
 @Setter
@@ -12,10 +11,10 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class CommonErrorResponse {
+public class CommonErrorResponse<T> {
     private boolean success;
     private String message;
-    private List<String> errors;
+    private T errors;
     private String errorCode;
     private int status;
     private String path;

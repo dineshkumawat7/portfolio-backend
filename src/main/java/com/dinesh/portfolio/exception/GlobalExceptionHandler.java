@@ -1,26 +1,29 @@
 package com.dinesh.portfolio.exception;
 
 import com.dinesh.portfolio.dto.response.CommonErrorResponse;
+import com.dinesh.portfolio.dto.response.ValidationErrors;
 import com.dinesh.portfolio.util.ResponseBuilder;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<CommonErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
-        log.error("Unhandled exception occurred at URI: {}", request.getRequestURI(), ex);
-        CommonErrorResponse errorResponse = ResponseBuilder.buildErrorResponse(
+    public ResponseEntity<CommonErrorResponse<String>> handleGenericException(Exception ex, HttpServletRequest request) {
+        log.error("Unexpected error occurred | error: {}", ex.getMessage(), ex);
+        CommonErrorResponse<String> errorResponse = ResponseBuilder.buildErrorResponse(
                 "Something went wrong. Please try again later.",
-                List.of(ex.getMessage()),
+                ex.getMessage(),
                 "INTERNAL_SERVER_ERROR",
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 request
@@ -29,12 +32,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(RequestProcessingException.class)
-    public ResponseEntity<CommonErrorResponse> handleRequestProcessingException(
+    public ResponseEntity<CommonErrorResponse<String>> handleRequestProcessingException(
             RequestProcessingException ex, HttpServletRequest request) {
-        log.error("Unhandled exception occurred at URI: {}", request.getRequestURI(), ex);
-        CommonErrorResponse errorResponse = ResponseBuilder.buildErrorResponse(
+        log.error("Request processing failed | error : {}", ex.getMessage(), ex);
+        CommonErrorResponse<String> errorResponse = ResponseBuilder.buildErrorResponse(
                 "Request processing failed",
-                List.of(ex.getMessage()),
+                ex.getMessage(),
                 "REQUEST_PROCESSING_ERROR",
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 request
@@ -43,13 +46,13 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DatabaseOperationException.class)
-    public ResponseEntity<CommonErrorResponse> handleDatabaseException(
+    public ResponseEntity<CommonErrorResponse<String>> handleDatabaseException(
             DatabaseOperationException ex, HttpServletRequest request) {
 
-        log.error("Database exception occurred", ex);
-        CommonErrorResponse errorResponse = ResponseBuilder.buildErrorResponse(
+        log.error("Database operation failed | error: {}", ex.getMessage(), ex);
+        CommonErrorResponse<String> errorResponse = ResponseBuilder.buildErrorResponse(
                 "Database operation failed",
-                List.of(ex.getMessage()),
+                ex.getMessage(),
                 "DATABASE_ERROR",
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 request
@@ -58,11 +61,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ServiceException.class)
-    public ResponseEntity<CommonErrorResponse> handleServiceException(ServiceException ex, HttpServletRequest request) {
-        log.error("Unhandled exception occurred at URI: {}", request.getRequestURI(), ex);
-        CommonErrorResponse errorResponse = ResponseBuilder.buildErrorResponse(
+    public ResponseEntity<CommonErrorResponse<String>> handleServiceException(ServiceException ex, HttpServletRequest request) {
+        log.error("Service exception occurred | error: {}", ex.getMessage(), ex);
+        CommonErrorResponse<String> errorResponse = ResponseBuilder.buildErrorResponse(
                 "Database operation failed",
-                List.of(ex.getMessage()),
+                ex.getMessage(),
                 "DATABASE_ERROR",
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 request
@@ -71,17 +74,42 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<CommonErrorResponse> handleResourceNotFoundException(
+    public ResponseEntity<CommonErrorResponse<String>> handleResourceNotFoundException(
             ResourceNotFoundException ex, HttpServletRequest request
     ) {
-        log.warn("Resource not found. RequestId: {}, Error: {}", request.getRequestId(), ex.getMessage(), ex);
-        CommonErrorResponse errorResponse = ResponseBuilder.buildErrorResponse(
+        log.warn("Resource not found | error: {}", ex.getMessage(), ex);
+        CommonErrorResponse<String> errorResponse = ResponseBuilder.buildErrorResponse(
                 "Resource not found",
-                List.of(ex.getMessage()),
+                ex.getMessage(),
                 "RESOURCE_NOT_FOUND",
                 HttpStatus.NOT_FOUND,
                 request
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<CommonErrorResponse<List<ValidationErrors>>> handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException ex, HttpServletRequest request
+    ) {
+        log.error("Validation failed | error: {}", ex.getMessage(), ex);
+        List<ValidationErrors> validationErrors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(fieldError -> ValidationErrors.builder()
+                        .field(fieldError.getField())
+                        .rejectedValue(fieldError.getRejectedValue())
+                        .message(fieldError.getDefaultMessage())
+                        .code(fieldError.getCode())
+                        .build())
+                .collect(Collectors.toList());
+        CommonErrorResponse<List<ValidationErrors>> errorResponse = ResponseBuilder.buildErrorResponse(
+                "Validation failed",
+                validationErrors,
+                "VALIDATION_ERROR",
+                HttpStatus.BAD_REQUEST,
+                request
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 }

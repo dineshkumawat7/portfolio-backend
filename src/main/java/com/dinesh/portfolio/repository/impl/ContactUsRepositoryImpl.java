@@ -3,7 +3,7 @@ package com.dinesh.portfolio.repository.impl;
 import com.dinesh.portfolio.entity.ContactUs;
 import com.dinesh.portfolio.exception.DatabaseOperationException;
 import com.dinesh.portfolio.repository.ContactUsRepository;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Repository
 public class ContactUsRepositoryImpl implements ContactUsRepository {
 
@@ -86,21 +86,21 @@ public class ContactUsRepositoryImpl implements ContactUsRepository {
             }
 
             Long generatedId = Objects.requireNonNull(keyHolder.getKey()).longValue();
-            log.info("Contact request saved successfully | id={}", generatedId);
+            log.info("Contact request saved successfully | id: {} | email: {}", generatedId, contactUs.getEmail());
             contactUs.setId(generatedId);
             return contactUs;
         } catch (DataAccessException ex) {
             log.error(
-                    "Database error saving contact request | email={}, error={}",
+                    "Database error saving contact request | email: {} | error: {}",
                     contactUs.getEmail(),
-                    ex.getMessage(), ex
+                    ex.getMessage()
             );
             throw new DatabaseOperationException("Database error occurred while saving contact request", ex);
         } catch (Exception ex) {
             log.error(
-                    "Unexpected error saving contact request | email={}, error={}",
+                    "Unexpected error saving contact request | email: {} | error: {}",
                     contactUs.getEmail(),
-                    ex.getMessage(), ex);
+                    ex.getMessage());
             throw new DatabaseOperationException("Unexpected error occurred while saving contact request", ex);
         }
     }
@@ -110,20 +110,20 @@ public class ContactUsRepositoryImpl implements ContactUsRepository {
         log.info("Executing database query to find All contact-us records");
         try {
             List<ContactUs> contactUsList = jdbcTemplate.query(SELECT_ALL_QUERY, contactUsRowMapper);
-            log.info("All contact-us records fetched successfully | totalRecords={}", contactUsList.size());
+            log.info("All contact-us records fetched successfully | totalRecords: {}", contactUsList.size());
             return contactUsList;
         } catch (DataAccessException ex) {
-            log.error("Database error fetching contact-us records | error={}", ex.getMessage(), ex);
+            log.error("Database error fetching contact-us records | error: {}", ex.getMessage());
             throw new DatabaseOperationException("Database error occurred while fetching contact requests", ex);
         } catch (Exception ex) {
-            log.error("Unexpected error fetching contact requests | error={}", ex.getMessage(), ex);
+            log.error("Unexpected error fetching contact requests | error: {}", ex.getMessage());
             throw new DatabaseOperationException("Unexpected error occurred while fetching contact requests", ex);
         }
     }
 
     @Override
     public ContactUs findById(Long id) {
-        log.info("Executing database query to fetch contact request by id | id={}", id);
+        log.info("Executing database query to fetch contact request by id | id: {}", id);
         try {
             ContactUs contactUs = jdbcTemplate.queryForObject(
                     SELECT_BY_ID_QUERY,
@@ -135,25 +135,23 @@ public class ContactUsRepositoryImpl implements ContactUsRepository {
                 log.warn("No contact request found | id={}", id);
                 throw new DatabaseOperationException("Contact request not found");
             }
-            log.info("Contact request fetched successfully | id={}", id);
+            log.info("Contact request fetched successfully | id: {}", id);
             return contactUs;
         } catch (EmptyResultDataAccessException ex) {
-            log.warn("No contact-us record found in database | id={}", id);
+            log.warn("No contact-us record found in database | id: {}", id);
             return null;
         } catch (DataAccessException ex) {
             log.error(
-                    "Database query failed while fetching contact request | id={}, error={}",
+                    "Database query failed while fetching contact request | id: {} | error: {}",
                     id,
-                    ex.getMessage(),
-                    ex
+                    ex.getMessage()
             );
             throw new DatabaseOperationException("Database error occurred while fetching contact request", ex);
         } catch (Exception ex) {
             log.error(
-                    "Unexpected exception occurred while fetching contact request | id={}, error={}",
+                    "Unexpected exception occurred while fetching contact request | id: {} | error: {}",
                     id,
-                    ex.getMessage(),
-                    ex
+                    ex.getMessage()
             );
             throw new DatabaseOperationException("Unexpected error occurred while fetching contact request", ex);
         }
@@ -168,25 +166,19 @@ public class ContactUsRepositoryImpl implements ContactUsRepository {
                 log.warn("Delete operation failed because contact-us record does not exist | id={}", id);
                 throw new DatabaseOperationException("Contact-us record not found with id: " + id);
             }
-            log.info(
-                    "Contact-us record deleted successfully from database | id={}, rowsAffected={}",
-                    id,
-                    rowsAffected
-            );
+            log.info("Contact-us record deleted successfully from database | id: {}", id);
         } catch (DataAccessException ex) {
             log.error(
-                    "Database exception occurred while deleting contact-us record | id={}, error={}",
+                    "Database exception occurred while deleting contact-us record | id: {}, error: {}",
                     id,
-                    ex.getMessage(),
-                    ex
+                    ex.getMessage()
             );
             throw new DatabaseOperationException("Database error occurred while deleting contact-us record", ex);
         } catch (Exception ex) {
             log.error(
-                    "Unexpected exception occurred while deleting contact-us record | id={}, error={}",
+                    "Unexpected exception occurred while deleting contact-us record | id: {}, error: {}",
                     id,
-                    ex.getMessage(),
-                    ex
+                    ex.getMessage()
             );
             throw new DatabaseOperationException("Unexpected error occurred while deleting contact-us record", ex);
         }

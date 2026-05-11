@@ -5,6 +5,7 @@ import com.dinesh.portfolio.dto.ContactUsResponseDTO;
 import com.dinesh.portfolio.dto.response.CommonSuccessResponse;
 import com.dinesh.portfolio.service.ContactUsService;
 import com.dinesh.portfolio.util.ResponseBuilder;
+import com.dinesh.portfolio.util.Utility;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -49,12 +50,12 @@ public class ContactUsController {
     public ResponseEntity<CommonSuccessResponse<ContactUsResponseDTO>> createContactUs(
             @Valid @RequestBody ContactUsRequestDTO contactUsRequestDTO, HttpServletRequest request
     ) {
-        log.info("Received Contact Us request | email={}", contactUsRequestDTO.getEmail());
+        log.info("Received Contact Us request | \n{}", Utility.toJson(contactUsRequestDTO));
         ContactUsResponseDTO contactUs = contactUsService.createContactUs(contactUsRequestDTO);
         CommonSuccessResponse<ContactUsResponseDTO> contactUsResponseDTO = ResponseBuilder.buildSuccessResponse(
                 "Request submitted successfully", contactUs, HttpStatus.CREATED, request
         );
-        log.info("Response prepared successfully for save contact-us | email: {}", contactUsRequestDTO.getEmail());
+        log.info("Response prepared successfully for save contact-us | \n{}", Utility.toJson(contactUsResponseDTO));
         return ResponseEntity.status(HttpStatus.CREATED).body(contactUsResponseDTO);
     }
 
@@ -75,7 +76,7 @@ public class ContactUsController {
         CommonSuccessResponse<List<ContactUsResponseDTO>> contactUsResponseDTO = ResponseBuilder.buildSuccessResponse(
                 "Records fetched successfully", contactUsDetails, HttpStatus.OK, request
         );
-        log.info("Response prepared successfully for contact-us records");
+        log.info("Response prepared successfully for contact-us records | totalRecords: {}", contactUsDetails.size());
         return ResponseEntity.status(HttpStatus.OK).body(contactUsResponseDTO);
     }
 
@@ -94,12 +95,12 @@ public class ContactUsController {
             @Parameter(description = "Unique ID of contact-us record", example = "1")
             @PathVariable Long id, HttpServletRequest request
     ) {
-        log.info("Received request to fetch contact-us record | id={}", id);
+        log.info("Received request to fetch contact-us record | id: {}", id);
         ContactUsResponseDTO contactUs = contactUsService.getContactUsDetailById(id);
         CommonSuccessResponse<ContactUsResponseDTO> contactUsResponseDTO = ResponseBuilder.buildSuccessResponse(
                 "Record fetched successfully", contactUs, HttpStatus.OK, request
         );
-        log.info("Response prepared successfully for contact-us record | Id {}", id);
+        log.info("Response prepared successfully for contact-us record | /n{}", Utility.toJson(contactUsResponseDTO));
         return ResponseEntity.status(HttpStatus.OK).body(contactUsResponseDTO);
     }
 
@@ -118,12 +119,12 @@ public class ContactUsController {
             @Parameter(description = "Unique ID of contact-us record", example = "1")
             @PathVariable Long id, HttpServletRequest request
     ) {
-        log.info("Received request to delete contact-us record | id={}", id);
+        log.info("Received request to delete contact-us record | id: {}", id);
         contactUsService.deleteContactUsDetailsById(id);
         CommonSuccessResponse<ContactUsResponseDTO> response = ResponseBuilder.buildSuccessResponse(
                 "Record deleted successfully", null, HttpStatus.OK, request
         );
-        log.info("Response prepared successfully for delete contact-us request | id={}", id);
+        log.info("Response prepared successfully for delete contact-us request | /n{}", Utility.toJson(response));
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

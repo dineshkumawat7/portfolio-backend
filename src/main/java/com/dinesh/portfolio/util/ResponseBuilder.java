@@ -3,11 +3,9 @@ package com.dinesh.portfolio.util;
 import com.dinesh.portfolio.dto.response.CommonErrorResponse;
 import com.dinesh.portfolio.dto.response.CommonSuccessResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 
 import java.time.Instant;
-import java.util.List;
 
 public class ResponseBuilder {
 
@@ -18,7 +16,7 @@ public class ResponseBuilder {
             String message, T data, HttpStatus status, HttpServletRequest request
     ) {
         return CommonSuccessResponse.<T>builder()
-                .success(true)
+                .success(Constant.SUCCESS_TAG)
                 .message(message)
                 .data(data)
                 .status(status.value())
@@ -28,11 +26,11 @@ public class ResponseBuilder {
                 .build();
     }
 
-    public static CommonErrorResponse buildErrorResponse(
-            String message, List<String> errors, String errorCode, HttpStatus status, HttpServletRequest request
+    public static <T> CommonErrorResponse<T> buildErrorResponse(
+            String message, T errors, String errorCode, HttpStatus status, HttpServletRequest request
     ) {
-        return CommonErrorResponse.builder()
-                .success(false)
+        return CommonErrorResponse.<T>builder()
+                .success(Constant.FAILURE_TAG)
                 .message(message)
                 .errors(errors)
                 .errorCode(errorCode)
