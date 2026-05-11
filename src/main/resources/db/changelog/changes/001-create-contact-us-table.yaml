@@ -17,6 +17,13 @@ databaseChangeLog:
                     nullable: false
 
               - column:
+                  name: ticket_number
+                  type: VARCHAR(100)
+                  constraints:
+                    unique: true
+                    nullable: false
+
+              - column:
                   name: name
                   type: VARCHAR(150)
                   constraints:
@@ -41,6 +48,23 @@ databaseChangeLog:
                     nullable: false
 
               - column:
+                  name: status
+                  type: VARCHAR(30)
+                  defaultValue: "NEW"
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: email_sent
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: remark
+                  type: TEXT
+
+              - column:
                   name: created_at
                   type: TIMESTAMP
                   defaultValueComputed: CURRENT_TIMESTAMP
@@ -51,5 +75,8 @@ databaseChangeLog:
                   name: updated_at
                   type: TIMESTAMP
                   defaultValueComputed: CURRENT_TIMESTAMP
-                  constraints:
-                    nullable: false
+
+              - column:
+                  name: replied_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP

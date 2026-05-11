@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Contact Response</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f3f4f6;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #1f2937;
+            padding: 30px 15px;
+        }
+
+        .email-wrapper {
+            width: 100%;
+        }
+
+        .email-container {
+            max-width: 650px;
+            margin: auto;
+            background: #ffffff;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+        }
+
+        .email-header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed, #9333ea);
+            padding: 50px 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .email-header h1 {
+            font-size: 34px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .email-header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .email-body {
+            padding: 40px 35px;
+        }
+
+        .email-body h2 {
+            font-size: 26px;
+            margin-bottom: 18px;
+            color: #111827;
+        }
+
+        .email-body p {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #4b5563;
+            margin-bottom: 18px;
+        }
+
+        .info-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-left: 5px solid #6366f1;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 28px 0;
+        }
+
+        .info-box h3 {
+            font-size: 17px;
+            margin-bottom: 12px;
+            color: #111827;
+        }
+
+        .info-item {
+            margin-bottom: 10px;
+            color: #374151;
+            font-size: 15px;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .button-container {
+            text-align: center;
+            margin-top: 35px;
+        }
+
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: bold;
+            transition: 0.3s ease;
+        }
+
+        .button:hover {
+            background: linear-gradient(135deg, #4338ca, #6d28d9);
+        }
+
+        .email-footer {
+            background-color: #f9fafb;
+            padding: 30px 20px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .email-footer p {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .social-links a {
+            text-decoration: none;
+            margin: 0 10px;
+            color: #4f46e5;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        @media screen and (max-width: 600px) {
+            .email-body,
+            .email-header,
+            .email-footer {
+                padding: 25px 20px;
+            }
+
+            .email-header h1 {
+                font-size: 28px;
+            }
+
+            .email-body h2 {
+                font-size: 22px;
+            }
+
+            .button {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="email-wrapper">
+    <div class="email-container">
+        <!-- Header -->
+        <div class="email-header">
+            <h1>Dinesh Kumawat</h1>
+            <p>Software Developer • Java • Spring Boot • Full Stack Developer</p>
+        </div>
+        <!-- Body -->
+        <div class="email-body">
+            <h2>
+                Hello,
+                <span th:text="${name}">User</span>
+            </h2>
+            <p>
+                Thank you for contacting me through my portfolio website.
+                I have successfully received your message and I truly appreciate your interest.
+            </p>
+            <p>
+                I will review your inquiry and get back to you as soon as possible,
+                usually within <strong>24 hours</strong>.
+            </p>
+            <!-- Dynamic Info Box -->
+            <div class="info-box">
+                <h3>Request Summary:</h3>
+                <div class="info-item">
+                    <span class="label">Ticket ID:</span>
+                    <span th:text="${ticketId}">
+                            Your ticket id goes here...
+                        </span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Subject:</span>
+                    <span th:text="${subject}">Portfolio Inquiry</span>
+                </div>
+            </div>
+            <p>
+                Meanwhile, feel free to explore my projects, skills, and latest work
+                on my portfolio website.
+            </p>
+            <!-- Button -->
+            <div class="button-container">
+                <a class="button"
+                   href="https://yourportfolio.com"
+                   target="_blank">
+                    Visit Our Website
+                </a>
+            </div>
+            <p style="margin-top: 40px;">
+                Best Regards,<br/>
+                <strong>Dinesh Kumawat</strong><br/>
+                Software Developer
+            </p>
+        </div>
+        <!-- Footer -->
+        <div class="email-footer">
+            <p>
+                © 2026 Dinesh Kumawat. All rights reserved.
+            </p>
+            <div class="social-links">
+                <a href="https://github.com/dineshkumawat7">GitHub</a>
+                <a href="https://linkedin.com/in/yourusername">LinkedIn</a>
+                <a href="https://twitter.com/yourusername">Twitter</a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

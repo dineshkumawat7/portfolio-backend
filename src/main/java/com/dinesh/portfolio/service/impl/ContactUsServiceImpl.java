@@ -3,15 +3,22 @@ package com.dinesh.portfolio.service.impl;
 import com.dinesh.portfolio.dto.ContactUsRequestDTO;
 import com.dinesh.portfolio.dto.ContactUsResponseDTO;
 import com.dinesh.portfolio.entity.ContactUs;
+import com.dinesh.portfolio.enums.ContactUsStatus;
+import com.dinesh.portfolio.exception.DatabaseOperationException;
 import com.dinesh.portfolio.exception.ResourceNotFoundException;
 import com.dinesh.portfolio.exception.ServiceException;
 import com.dinesh.portfolio.repository.ContactUsRepository;
 import com.dinesh.portfolio.service.ContactUsService;
+import com.dinesh.portfolio.service.EmailService;
+import com.dinesh.portfolio.util.Utility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 import java.time.Instant;
 import java.util.List;
@@ -23,6 +30,8 @@ public class ContactUsServiceImpl implements ContactUsService {
 
     private final ContactUsRepository contactUsRepository;
     private final ModelMapper modelMapper;
+    private final EmailService emailService;
+    private final TemplateEngine templateEngine;
 
     @Transactional
     @Override
@@ -30,15 +39,19 @@ public class ContactUsServiceImpl implements ContactUsService {
         log.info("Creating new contact-us record | email: {}", contactUsRequestDTO.getEmail());
         try {
             ContactUs contactUs = ContactUs.builder()
+                    .ticketNumber(Utility.generateTicketNumber())
                     .name(contactUsRequestDTO.getName())
                     .email(contactUsRequestDTO.getEmail())
                     .subject(contactUsRequestDTO.getSubject())
                     .message(contactUsRequestDTO.getMessage())
+                    .status(ContactUsStatus.NEW.name())
+                    .emailSent(false)
                     .createdAt(Instant.now())
-                    .updatedAt(Instant.now())
                     .build();
             ContactUs saved = contactUsRepository.save(contactUs);
             log.info("Contact-us record created successfully | id: {} | email: {}", saved.getId(), saved.getEmail());
+            // sent acknowledgment email to user
+            sendContactUsAcknowledgementEmail(saved.getId(), saved.getEmail());
             return modelMapper.map(saved, ContactUsResponseDTO.class);
         } catch (Exception ex) {
             log.error(
@@ -129,4 +142,59 @@ public class ContactUsServiceImpl implements ContactUsService {
         }
     }
 
+    @Async
+    private void sendContactUsAcknowledgementEmail(Long id, String email) {
+        log.info("Initiating contact-us acknowledgment email process | id: {} | email: {}", id, email);
+        try {
+            ContactUsResponseDTO contactUsDetail = getContactUsDetailById(id);
+            Context context = new Context();
+            context.setVariable("name", contactUsDetail.getName());
+            context.setVariable("ticketId", contactUsDetail.getTicketNumber());
+            context.setVariable("subject", contactUsDetail.getSubject());
+            String htmlContent = templateEngine.process("contact-response-email", context);
+            emailService.sendEmail(email, "Thank You For Contacting Me", htmlContent)
+                    .thenAccept(success -> {
+                        if (success) {
+                            try {
+                                ContactUs contactUs = contactUsRepository.findById(id);
+                                contactUs.setEmailSent(true);
+                                contactUs.setStatus(ContactUsStatus.IN_PROGRESS.name());
+                                contactUs.setUpdatedAt(Instant.now());
+                                contactUsRepository.update(contactUs);
+
+                                log.info(
+                                        "Contact-us acknowledgment email sent successfully and DB updated " +
+                                                "| id: {} | email: {}", id, email
+                                );
+                            } catch (Exception ex) {
+                                log.error(
+                                        "Email sent but DB update failed for contact-us record " +
+                                                "| id: {} | email: {} | error={}", id, email, ex.getMessage()
+                                );
+                                throw new DatabaseOperationException(
+                                        "Email sent but DB update failed for contact-us record", ex
+                                );
+                            }
+                        } else {
+                            log.warn(
+                                    "Failed to send contact-us acknowledgment email | id: {} | email: {}",
+                                    id, email
+                            );
+                        }
+                    })
+                    .exceptionally(ex -> {
+                        log.error(
+                                "Unexpected error while sending contact-us email | id: {} | email: {} | error: {}",",
+                                id, email, ex.getMessage(), ex
+                        );
+                        throw new ServiceException("Unexpected error while sending contact-us email", ex);
+                    });
+        } catch (Exception ex) {
+            log.error(
+                    "Failed to initiate contact-us email process | id: {} | email: {} | error: {}",
+                    id, email, ex.getMessage(), ex
+            );
+            throw new ServiceException("Failed to process contact-us email", ex);
+        }
+    }
 }

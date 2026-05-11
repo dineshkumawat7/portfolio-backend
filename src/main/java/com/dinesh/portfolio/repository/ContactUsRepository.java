@@ -8,5 +8,6 @@ public interface ContactUsRepository {
     ContactUs save(ContactUs contactUs);
     List<ContactUs> findAll();
     ContactUs findById(Long id);
+    ContactUs update(ContactUs contactUs);
     void deleteById(Long id);
 }

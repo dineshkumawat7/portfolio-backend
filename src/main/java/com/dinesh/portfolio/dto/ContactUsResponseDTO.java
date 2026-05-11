@@ -13,10 +13,15 @@ import java.time.Instant;
 @AllArgsConstructor
 public class ContactUsResponseDTO {
     private Long id;
+    private String ticketNumber;
     private String name;
     private String email;
     private String subject;
     private String message;
+    private String status;
+    private Boolean emailSent;
+    private String remark;
     private Instant createdAt;
     private Instant updatedAt;
+    private Instant repliedAt;
 }

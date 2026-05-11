@@ -26,19 +26,29 @@ public class ContactUsRepositoryImpl implements ContactUsRepository {
 
     private static final String INSERT_QUERY = """
             INSERT INTO contact_us
-            (name, email, subject, message, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            (ticket_number, name, email, subject, message, status, email_sent, remark, created_at, updated_at, 
+                    replied_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
     private static final String SELECT_ALL_QUERY = """
-            SELECT id, name, email, subject, message, created_at, updated_at
+            SELECT id, ticket_number, name, email, subject, status, email_sent, remark, message, created_at,
+                   updated_at, replied_at
             FROM contact_us
             ORDER BY id DESC
             """;
 
     private static final String SELECT_BY_ID_QUERY = """
-            SELECT id, name, email, subject, message, created_at, updated_at
+            SELECT id, ticket_number, name, email, subject, status, email_sent, remark, message, created_at,
+                   updated_at, replied_at
             FROM contact_us
+            WHERE id = ?
+            """;
+
+    private static final String UPDATE_QUERY = """
+            UPDATE contact_us
+            SET ticket_number = ?, name = ?, email = ?, subject = ?, message = ?, status = ?, email_sent = ?, 
+                remark = ?, created_at = ?, updated_at = ?, replied_at = ?
             WHERE id = ?
             """;
 
@@ -51,12 +61,20 @@ public class ContactUsRepositoryImpl implements ContactUsRepository {
 
     private final RowMapper<ContactUs> contactUsRowMapper = (rs, rowNum) -> ContactUs.builder()
             .id(rs.getLong("id"))
+            .ticketNumber(rs.getString("ticket_number"))
             .name(rs.getString("name"))
             .email(rs.getString("email"))
             .subject(rs.getString("subject"))
             .message(rs.getString("message"))
-            .createdAt(rs.getTimestamp("created_at").toInstant())
-            .updatedAt(rs.getTimestamp("updated_at").toInstant())
+            .status(rs.getString("status"))
+            .emailSent(rs.getBoolean("email_sent"))
+            .remark(rs.getString("remark"))
+            .createdAt(rs.getTimestamp(
+                    "created_at") != null ? rs.getTimestamp("created_at").toInstant() : null)
+            .updatedAt(rs.getTimestamp(
+                    "updated_at") != null ? rs.getTimestamp("updated_at").toInstant() : null)
+            .repliedAt(rs.getTimestamp(
+                    "replied_at") != null ? rs.getTimestamp("replied_at").toInstant() : null)
             .build();
 
     @Override
@@ -70,13 +88,19 @@ public class ContactUsRepositoryImpl implements ContactUsRepository {
                         INSERT_QUERY,
                         Statement.RETURN_GENERATED_KEYS
                 );
-
-                ps.setString(1, contactUs.getName());
-                ps.setString(2, contactUs.getEmail());
-                ps.setString(3, contactUs.getSubject());
-                ps.setString(4, contactUs.getMessage());
-                ps.setTimestamp(5, Timestamp.from(contactUs.getCreatedAt()));
-                ps.setTimestamp(6, Timestamp.from(contactUs.getUpdatedAt()));
+                ps.setString(1, contactUs.getTicketNumber());
+                ps.setString(2, contactUs.getName());
+                ps.setString(3, contactUs.getEmail());
+                ps.setString(4, contactUs.getSubject());
+                ps.setString(5, contactUs.getMessage());
+                ps.setString(6, contactUs.getStatus());
+                ps.setBoolean(7, contactUs.getEmailSent());
+                ps.setString(8, contactUs.getRemark());
+                ps.setTimestamp(9, Timestamp.from(contactUs.getCreatedAt()));
+                ps.setTimestamp(10,
+                        contactUs.getUpdatedAt() == null ? null : Timestamp.from(contactUs.getUpdatedAt()));
+                ps.setTimestamp(11,
+                        contactUs.getRepliedAt() == null ? null : Timestamp.from(contactUs.getRepliedAt()));
                 return ps;
             }, keyHolder);
 
@@ -158,12 +182,63 @@ public class ContactUsRepositoryImpl implements ContactUsRepository {
     }
 
     @Override
+    public ContactUs update(ContactUs contactUs) {
+        log.info(
+                "Executing database query to update contact-us record | id: {} | email: {}",
+                contactUs.getId(), contactUs.getEmail()
+        );
+        try {
+            int rowsAffected = jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(UPDATE_QUERY);
+
+                ps.setString(1, contactUs.getTicketNumber());
+                ps.setString(2, contactUs.getName());
+                ps.setString(3, contactUs.getEmail());
+                ps.setString(4, contactUs.getSubject());
+                ps.setString(5, contactUs.getMessage());
+                ps.setString(6, contactUs.getStatus());
+                ps.setBoolean(7, contactUs.getEmailSent());
+                ps.setString(8, contactUs.getRemark());
+                ps.setTimestamp(9, Timestamp.from(contactUs.getCreatedAt()));
+                ps.setTimestamp(10,
+                        contactUs.getUpdatedAt() == null ? null : Timestamp.from(contactUs.getUpdatedAt()));
+                ps.setTimestamp(11,
+                        contactUs.getRepliedAt() == null ? null : Timestamp.from(contactUs.getRepliedAt()));
+                ps.setLong(12, contactUs.getId());
+                return ps;
+            });
+
+            if (rowsAffected == 0) {
+                log.error("Database update failed | id: {} | email: {}", contactUs.getId(), contactUs.getEmail());
+                throw new DatabaseOperationException("Unable to update contact request");
+            }
+            log.info(
+                    "Contact request updated successfully | id: {} | email: {}",
+                    contactUs.getId(), contactUs.getEmail()
+            );
+            return contactUs;
+        } catch (DataAccessException ex) {
+            log.error(
+                    "Database error updating contact request | id: {} | error: {}",
+                    contactUs.getId(), ex.getMessage()
+            );
+            throw new DatabaseOperationException("Database error occurred while updating contact request", ex);
+        } catch (Exception ex) {
+            log.error(
+                    "Unexpected error updating contact request | id: {} | error: {}",
+                    contactUs.getId(), ex.getMessage()
+            );
+            throw new DatabaseOperationException("Unexpected error occurred while updating contact request", ex);
+        }
+    }
+
+    @Override
     public void deleteById(Long id) {
-        log.info("Executing database query to delete operation for contact-us record | id={}", id);
+        log.info("Executing database query to delete operation for contact-us record | id: {}", id);
         try {
             int rowsAffected = jdbcTemplate.update(DELETE_BY_ID_QUERY, id);
             if (rowsAffected == 0) {
-                log.warn("Delete operation failed because contact-us record does not exist | id={}", id);
+                log.warn("Delete operation failed because contact-us record does not exist | id: {}", id);
                 throw new DatabaseOperationException("Contact-us record not found with id: " + id);
             }
             log.info("Contact-us record deleted successfully from database | id: {}", id);
